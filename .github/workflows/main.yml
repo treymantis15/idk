@@ -5,10 +5,19 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: 21
           distribution: temurin
+      - name: Restore missing wrapper jar
+        run: |
+          V=$(grep distributionUrl gradle/wrapper/gradle-wrapper.properties | sed -E 's/.*gradle-([0-9.]+)-(bin|all).*/\1/')
+          echo "Gradle version: $V"
+          mkdir -p /tmp/w
+          cd /tmp/w
+          gradle wrapper --gradle-version "$V"
+          mkdir -p "$GITHUB_WORKSPACE/gradle/wrapper"
+          cp /tmp/w/gradle/wrapper/gradle-wrapper.jar "$GITHUB_WORKSPACE/gradle/wrapper/gradle-wrapper.jar"
       - run: chmod +x gradlew
       - run: ./gradlew build
       - uses: actions/upload-artifact@v4
